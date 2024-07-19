@@ -1,1 +1,3 @@
-# Dental2023
+# Dental Analysis 2023
+
+  This personal project was created for the dental office I work at.  All of the numeric information within this project has been altered not to represent the actual private information of the office.  I coordinate many meetings within the office, and as my interest in SQL grew I decided to incorporate it into where I work.  Our end of the year meeting was presented with the use of this information and dashboard I created to help visualize what we've accomplished and where we stand as a team. Our dental office software runs on a SQL database and I was able to extract all of the information I needed, transport it into excel, then export it into MSS, to be used within tableau to create a visual representation of the data.  
