@@ -1,0 +1,268 @@
+Select *
+from [Portfolio Project].dbo.ProductionByProviderType
+
+-- Here I will be cleaning, organizing, and formating the data in the ProductionbyProviderType table 
+
+-- Changing Date Format 
+
+Select Month, CONVERT(date, Month)
+from [Portfolio Project].dbo.ProductionByProviderType
+
+UPDATE ProductionByProviderType
+SET Month = CONVERT(date, Month)
+from [Portfolio Project].dbo.ProductionByProviderType
+
+ALTER TABLE dbo.ProductionByProviderType
+Add MonthStandard Date;
+
+UPDATE ProductionByProviderType
+SET MonthStandard = CONVERT(date, Month)
+from [Portfolio Project].dbo.ProductionByProviderType
+
+
+-- Add total production column in USD format
+
+Select Dollars, FORMAT(Dollars, 'C') as TotalProduction
+from [Portfolio Project].dbo.ProductionByProviderType
+
+ALTER TABLE dbo.ProductionByProviderType
+Add TotalProduction Nvarchar (255);
+
+UPDATE ProductionByProviderType
+SET TotalProduction = FORMAT(Dollars, 'C')
+From [Portfolio Project].dbo.ProductionByProviderType
+
+
+-- Sum of TotalProduction by Doctor
+
+Select Provider, SUM(Dollars) as TotalProduction
+From [Portfolio Project].dbo.ProductionByProviderType
+WHERE Provider LIKE 'Doctor'
+Group by Provider
+
+
+-- Sum of TotalProduction by Hygiene
+
+Select Provider, SUM(Dollars) as TotalProduction
+From [Portfolio Project].dbo.ProductionByProviderType
+WHERE Provider LIKE 'Hygiene'
+Group by Provider
+
+
+-- Total Production for 2023 excluding 2022 month
+
+Select Provider, SUM(Dollars) as TotalProduction
+From [Portfolio Project].dbo.ProductionByProviderType
+WHERE Provider LIKE 'Doctor' or 
+	  Provider Like 'Hygiene'
+Group by Provider
+
+
+-- SUM of Each Provider and Total excluding 2022 month
+
+Select
+    Provider,
+	MonthStandard,
+	Dollars,
+    SUM (case when MonthStandard <> '2022-12-01' then Dollars end)OVER() AS "Total2023Production",
+    SUM (case when MonthStandard <> '2022-12-01' then Dollars end) OVER (PARTITION BY Provider) AS "TotalSumByProvider"
+From [Portfolio Project].dbo.ProductionByProviderType
+
+
+-- Drop Month Column
+
+ALTER TABLE [Portfolio Project].dbo.ProductionByProviderType
+DROP COLUMN Month
+
+Select *
+From [Portfolio Project].dbo.ProductionByProviderType
+
+
+-- Here I will begin cleaning and organizing the AdjustedProductionByMonth table
+
+-- Drop Empty Columns
+
+ALTER TABLE [Portfolio Project].dbo.AdjustedProductionByMonth
+DROP COLUMN F4, F5, F6, F7, F8, F9
+
+
+-- Change Month to MonthStandard
+
+Select Month, CONVERT(date, Month)
+from [Portfolio Project].dbo.AdjustedProductionByMonth
+
+UPDATE AdjustedProductionByMonth
+SET Month = CONVERT(date, Month)
+From [Portfolio Project].dbo.AdjustedProductionByMonth
+
+ALTER TABLE dbo.AdjustedProductionByMonth
+Add MonthStandard Date;
+
+UPDATE AdjustedProductionByMonth
+SET MonthStandard = CONVERT(date, Month)
+From [Portfolio Project].dbo.ProductionByProviderType
+
+
+-- Create new columns out of Rows from AdjustedProductionPerMonth to be more visually appealing
+
+Select *
+From [Portfolio Project].dbo.AdjustedProductionByMonth
+
+CREATE VIEW [FormattedTableAdjustedProduction] AS
+Select 
+MonthStandard
+, sum(case when Type = 'Gross Production' then Dollars end) as GrossProduction
+, sum(case when Type = 'Adjustments' then Dollars end) as Adjustments
+, sum(case when Type = 'Write-Offs' then Dollars end) as WriteOffs
+, sum(case when Type = 'Adjusted PRoduction' then Dollars end) as AdjustedProduction
+From [Portfolio Project].dbo.AdjustedProductionByMonth
+Group by MonthStandard
+
+Select *
+From FormattedTableAdjustedProduction
+
+
+-- Month to Month Percentage
+
+Select  MonthStandard,
+        AdjustedProduction,
+        AdjustedProduction - LAG (AdjustedProduction) OVER (ORDER BY MonthStandard ASC) AS RevenueGrowth,
+		(AdjustedProduction - LAG (AdjustedProduction) OVER (ORDER BY MonthStandard ASC))/ LAG (AdjustedProduction)
+		OVER (ORDER BY MonthStandard ASC)*100 AS RevenueGrowthPercentage
+From FormattedTableAdjustedProduction;
+
+
+-- Profit Margin
+
+Select MonthStandard,
+	   sum(GrossProduction - AdjustedProduction)/ sum(GrossProduction)*100 as ProfitMargin
+	   From FormattedTableAdjustedProduction
+	   Group by MonthStandard
+
+
+-- I will begin organizing and cleaning the data in the ProductionByProviderEachMonth table
+
+Select *
+From [Portfolio Project].dbo.ProductionByProviderEachMonth
+
+
+-- I will change Month to Monthstandard
+
+Select Month, CONVERT(date, Month)
+from [Portfolio Project].dbo.ProductionByProviderEachMonth
+
+UPDATE ProductionByProviderEachMonth
+SET Month = CONVERT(date, Month)
+from [Portfolio Project].dbo.ProductionByProviderEachMonth
+
+ALTER TABLE dbo.ProductionByProviderEachMonth
+Add MonthStandard Date;
+
+UPDATE ProductionByProviderEachMonth
+SET MonthStandard = CONVERT(date, Month)
+from [Portfolio Project].dbo.ProductionByProviderEachMonth
+
+
+-- I will obtain the sum for each provider
+-- Total Sum of Dr.Ameri
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Dr. Ameri'
+Group By Provider
+
+
+-- Total Sum of Dr. Masih
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Dr. Masih'
+Group By Provider
+
+
+-- Total Sum of Tenzin
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Tenzin'
+Group By Provider
+
+
+-- Total Sum of Lia
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Lia'
+Group By Provider
+
+
+-- Total Sum of Dr. Vicky
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Dr. Vicky'
+Group By Provider
+
+
+-- Total Sum of Dr.Kambiz
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Dr. Kambiz'
+Group By Provider
+
+
+-- Total Sum of Dr.Farrokh
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Dr. Farrokh'
+Group By Provider
+
+
+-- Total Sum of Temp
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Temp'
+Group By Provider
+
+
+-- Total Sum of Dr. Agrawal
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Dr. Agrawal'
+Group By Provider
+
+
+-- Total Sum of Val
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Val'
+Group By Provider
+
+
+-- Total Sum of Dr. Arman
+
+Select Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider LIKE 'Dr. Arman'
+Group By Provider
+
+-- Here I will query the four full-time employees 
+
+Select 
+Provider, SUM(Dollars) as TotalProduction2023
+From [Portfolio Project].dbo.ProductionbyProviderEachMonth
+WHERE Provider IN ('Lia', 'Dr. Vicky', 'Dr. Ameri', 'Tenzin')
+Group By Provider
+Order By TotalProduction2023 desc
+
+
+-- AgingAR 
+
+Select *
+From [Portfolio Project].dbo.AgingAR
+Order By TotalDays
